@@ -49,7 +49,7 @@ resource "local_file" "hello" {
 
 ## What it is
 
-**Terraform** is an open-source-*style* (see topic 04 for the licence) **infrastructure as code tool** made by **HashiCorp** (owned by IBM since 2025). It was first released in **2014**, reached **1.0** in **2021**, and the current line is **1.17** (November 2026). Since 1.0, HashiCorp has promised that code written for any 1.x version keeps working on later 1.x versions.
+**Terraform** is an open-source-*style* (see topic 04 for the licence) **infrastructure as code tool** made by **HashiCorp** (owned by IBM since 2025). It was first released in **2014**, reached **1.0** in **2021**, and the current line is **1.17** (November 2026). Since 1.0, HashiCorp has promised that code written for any 1.x version keeps working on later 1.x versions. The promise covers the language and core workflow, not everything: for example, 1.3 removed several rarely used backends (`etcd`, `etcdv3`, `manta`, `swift`, `artifactory`), and provider upgrades follow their own versioning.
 
 It's a **single binary** written in Go. There's no server, no daemon, no agent on your machines. You download one file and run it, on your laptop or in a CI runner.
 

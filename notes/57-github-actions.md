@@ -118,7 +118,7 @@ PR opened
        5. plan -out=tfplan -lock-timeout=5m → show -no-color → comment on PR
 push to main (after merge)
  └─ terraform-main.yml
-     job plan  → (tf-plan role) → plan -out=tfplan → upload artifact (tfplan + .terraform.lock.hcl)
+     job plan  → (tf-plan role) → plan -out=tfplan → upload artifact (tfplan; the apply job gets .terraform.lock.hcl by checking out the same commit)
      job apply (needs: plan, environment: production)
        ⏸ waits for a required reviewer to approve in the GitHub UI (they read the plan in job 1's log/summary)
        → OIDC (sub = repo:acme/infra:environment:production) → tf-apply role
@@ -195,7 +195,30 @@ data "aws_iam_policy_document" "apply_trust" {
   }
 }
 
-# ── State access (both roles need the lock; plan only reads state) ──
+# ── State access ─────────────────────────────────────────────────────
+# PR plans are untrusted code (topic 70): the plan role may READ state and
+# write ONLY the lock file. Only the apply role can write or delete state.
+# In a multi-root repo, scope each role to its own key prefix, not bucket/*.
+data "aws_iam_policy_document" "state_read_and_lock" {
+  statement {
+    actions   = ["s3:ListBucket"]
+    resources = ["arn:aws:s3:::${var.state_bucket}"]
+  }
+  statement {
+    actions   = ["s3:GetObject"]
+    resources = ["arn:aws:s3:::${var.state_bucket}/*"]
+  }
+  statement {
+    actions   = ["s3:PutObject", "s3:DeleteObject"]
+    resources = ["arn:aws:s3:::${var.state_bucket}/*.tflock"]
+  }
+}
+
+resource "aws_iam_policy" "state_read_and_lock" {
+  name   = "tf-state-read-and-lock"
+  policy = data.aws_iam_policy_document.state_read_and_lock.json
+}
+
 data "aws_iam_policy_document" "state_rw" {
   statement {
     actions   = ["s3:ListBucket"]
@@ -226,7 +249,7 @@ resource "aws_iam_role_policy_attachment" "plan_readonly" {
 
 resource "aws_iam_role_policy_attachment" "plan_state" {
   role       = aws_iam_role.plan.name
-  policy_arn = aws_iam_policy.state_rw.arn
+  policy_arn = aws_iam_policy.state_read_and_lock.arn   # NOT state_rw
 }
 
 resource "aws_iam_role" "apply" {
@@ -249,7 +272,7 @@ output "plan_role_arn"  { value = aws_iam_role.plan.arn }
 output "apply_role_arn" { value = aws_iam_role.apply.arn }
 ```
 
-- The plan role's `state_rw` lets it write the **lock** object (`plan` takes the lock, topic 36) and, technically, state. Tighter: allow `PutObject`/`DeleteObject` only on `*.tflock` for the plan role.
+- ⚠️ *Corrected:* an earlier version gave the plan role full `state_rw`. Because a PR plan runs code from the PR (topic 70), that let **any PR read every state file (secrets included) and overwrite or delete state**. The plan role now gets `GetObject` plus write access only to `*.tflock` (`plan` takes the lock, topic 36). Even reading state is sensitive: state can contain secrets (topic 51), so in a real setup scope `GetObject` to the root's own key, and keep secrets out of state with ephemeral values and write-only arguments.
 - `ReadOnlyAccess` includes reading many data planes (e.g. S3 objects). Some teams use `ViewOnlyAccess` plus specific reads; balance with what `plan` needs to refresh.
 
 ```bash
@@ -286,7 +309,8 @@ env:
 
 concurrency:
   group: tf-${{ github.workflow }}-${{ github.event.pull_request.number }}
-  cancel-in-progress: true          # safe for PR plans: newer pushes supersede older plans
+  cancel-in-progress: false         # a cancelled plan can leave a stale state lock (topic 36);
+                                    # let it finish, or run PR plans with -lock=false
 
 jobs:
   plan:

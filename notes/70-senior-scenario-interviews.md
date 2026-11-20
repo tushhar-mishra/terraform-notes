@@ -81,7 +81,11 @@ A practice set. Each scenario: **the question → what they're testing → a mod
 - **Reviewed saved plans** with approvals; branch protection; `CODEOWNERS` (56).
 - Pin Terraform, providers (lock file with checksums), modules (versions/SHAs), CI actions (SHAs) (10, 45, 57).
 - Static scans + policy on the plan (53, 54); secrets out of state (51); short-lived restricted plan artifacts; protect the state bucket (35).
-- **Follow-up:** "A malicious PR adds a `local-exec` that curls the credentials." Plan runs with read-only, short-lived creds; no secrets in env; code review; consider blocking provisioners by policy, and running PR plans in isolated runners.
+- **Follow-up:** "Can a malicious PR steal credentials during `terraform plan`?" Yes, but **not** with `local-exec`: provisioners only run during apply. ⚠️ *Corrected.* Plan-time code execution comes from:
+  - `data "external"` (runs any program during plan) and `http` data sources (send data anywhere);
+  - a malicious or typosquatted **provider or module** (provider code runs during plan);
+  - editing the **workflow/Jenkinsfile** itself in the PR.
+  Controls: treat a PR plan as untrusted code execution. Run it with a plan role that can read only its own state key and write only the lock; no long-lived secrets on the runner; isolated, ephemeral runners; restrict providers to an allow-list/private mirror; block `external`/`http` data sources by policy (Conftest on the config); `CODEOWNERS` on `.github/` and CI files; require approval before running workflows from first-time or fork contributors.
 
 ### 5. "Our monorepo has 150 roots and PR plans take 40 minutes."
 

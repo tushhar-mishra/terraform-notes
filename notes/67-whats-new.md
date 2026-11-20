@@ -59,7 +59,7 @@
 | 1.13 | Aug 2025 | `terraform stacks` CLI; parallel test teardown | 50 |
 | **1.14** | Nov 2025 | **List resources + `terraform query`**; **`action` blocks** | 39, 52 |
 | 1.15 | Apr 2026 | `deprecated` on variables/outputs; `convert()`; variables in module `source`/`version`; output type constraints; S3 backend auth via `aws login`; Windows ARM64 | 14, 45 |
-| 1.16 | Aug 2026 | `lifecycle { destroy = false }`; `import` blocks in modules; `terraform_data` `store` block for ephemeral/sensitive values; action destroy events; `graph -format=mermaid`; `state show -json` | 24, 39, 52 |
+| 1.16 | Aug 2026 | `lifecycle { destroy = false }` (⚠️ listed in the 1.16.0-beta1 notes; confirm it in the final 1.16.0 CHANGELOG before quoting it); action `on_failure` modes; `import` blocks in modules; `terraform_data` `store` block for ephemeral/sensitive values; action destroy events; `graph -format=mermaid`; `state show -json` | 24, 39, 52 |
 | **1.17** | Oct 2026 | Variables/locals in provider requirements; `-minimal-refresh` plan option; **Terraform Policy** GA in the CLI (`-policies` on `plan`/`apply`/`query`) | 54, 63 |
 
 (Dates are the x.0 release months, checked against the official changelogs in November 2026: 1.12.0 May 14 2025, 1.13.0 Aug 20 2025, 1.14.0 Nov 19 2025, 1.15.0 Apr 29 2026, 1.16.0 Aug 26 2026, 1.17.0 Oct 21 2026. Latest patch at that time: 1.17.2. Earlier: `-replace` and `-refresh-only` came in 0.15.x, just before 1.0.)
@@ -68,11 +68,11 @@
 
 **List resources and `terraform query` (1.14+).** Providers can expose **list resources**: queries like "all EC2 instances with tag X". You write `list` blocks in `*.tfquery.hcl` files and run `terraform query`, which prints the matching real objects and can **generate configuration for importing them** with `-generate-config-out` (`terraform validate -query` checks query files offline). It closes the loop on drift's blind spot (unmanaged objects, topic 37) and on bulk adoption (topic 39). Provider support grows release by release; check your provider's docs for "List Resources".
 
-**Actions (1.14+).** Provider-defined **imperative operations** (invoke a Lambda, invalidate a CDN cache, run an SSM command), declared with `action` blocks and triggered from resource lifecycle events (an `action_trigger` block inside `lifecycle`) or explicitly with `-invoke`. They replace many `local-exec` provisioners with typed, validated, plan-visible operations (topic 52). 1.16 added `before_destroy`/`after_destroy` events.
+**Actions (1.14+).** Provider-defined **imperative operations** (invoke a Lambda, invalidate a CDN cache, run an SSM command), declared with `action` blocks and triggered from resource lifecycle events (`before_`/`after_` `create`/`update`, in an `action_trigger` block inside `lifecycle`) or explicitly with `-invoke`. They replace many `local-exec` provisioners with typed, validated, plan-visible operations (topic 52). 1.16 added `before_destroy`/`after_destroy` events.
 
 **Stacks (HCP Terraform).** Components (`*.tfcomponent.hcl`) + deployments (`*.tfdeploy.hcl`) orchestrated together, including deferred changes for chicken-and-egg cases like "cluster then Kubernetes resources" (topics 28, 50).
 
-**`lifecycle { destroy = false }` (1.16+)** and **import blocks in modules (1.16+)**: per-resource "forget instead of destroy", and modules that can adopt existing objects themselves (topics 24, 39). OpenTofu has had `destroy = false` since its 1.12.
+**`lifecycle { destroy = false }` (1.16+, ⚠️ verify in the final CHANGELOG)** and **import blocks in modules (1.16+, confirmed in the v1.16.0 release post)**: per-resource "forget instead of destroy", and modules that can adopt existing objects themselves (topics 24, 39). OpenTofu has had `destroy = false` since its 1.12.
 
 **Terraform Policy in the CLI (1.17+).** `plan`, `apply` and `query` take `-policies` to check policy files locally or in any CI, without HCP Terraform (topic 54).
 

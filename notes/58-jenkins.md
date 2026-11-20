@@ -221,6 +221,10 @@ pipeline {
 Key points:
 
 - **Two agent labels**: `tf-plan` agents run with a read-only instance role; `tf-apply` agents (fewer, locked down) have the write role. Branch/PR builds never reach `tf-apply`, because those stages are guarded by `when { branch 'main' }`.
+- ⚠️ **But the guard lives in the Jenkinsfile, and a PR can edit the Jenkinsfile.** A PR that deletes the `when` or asks for `label 'tf-apply'` in an early stage would run on the write agent. The `when` is a convenience, not a security boundary. Enforce the boundary outside the PR's control:
+  - restrict the `tf-apply` agents/cloud template to the `main` branch job only (folder- or job-level node restrictions, e.g. the Job Restrictions plugin), or put apply in a **separate job** that PR builds can't trigger;
+  - in the multibranch source, use **"Trust: Nobody"/"From users with Admin or Write permission"** so fork PRs build with the Jenkinsfile from the target branch, not from the PR;
+  - give the apply role an OIDC/IAM trust that only `main` builds can satisfy, and require `CODEOWNERS` review on `Jenkinsfile`.
 - **`lock(resource: ...)`** (Lockable Resources plugin) serialises plan/apply per state **across all jobs**, not just this branch.
 - **`stash`/`unstash`** carry the exact `tfplan` to the apply stage in the same build.
 - **`input` with `submitter`**: only that group can approve; `timeout` aborts if nobody does.
