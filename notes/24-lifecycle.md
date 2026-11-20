@@ -71,7 +71,7 @@ Default replacement (`-/+`): destroy old → create new. In between, **the thing
 
 **The trap:** the new and old objects exist **at the same time**. If the resource has a **unique name** (an S3 bucket name, an IAM role name, a load balancer name, a DNS record, a file path), creating the new one fails with "already exists". Fix: don't hard-code the name; use a **prefix** (`name_prefix = "web-"` in many AWS resources) or add a random suffix.
 
-It also **spreads**: if A has `create_before_destroy` and B depends on A, Terraform applies the same ordering to B's replacement, so the graph stays consistent.
+It also **spreads, upstream**: if A has `create_before_destroy` and A **depends on** B, Terraform forces create-before-destroy on B's replacement too (otherwise B would have to be destroyed before A's new copy exists, which is a cycle). ⚠️ *Corrected:* it propagates to A's **dependencies** (what A references), not to A's dependents. Resources that depend on A keep their own setting, so set `create_before_destroy` explicitly where you need it downstream. You can see the forced setting in `terraform plan` as `+/-` on B.
 
 ### `prevent_destroy`
 

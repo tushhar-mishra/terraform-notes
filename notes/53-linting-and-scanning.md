@@ -56,7 +56,7 @@ A linter for Terraform with **plugins (rulesets)** per provider:
 
 ### Trivy
 
-**Trivy** (by Aqua Security, open source) scans container images, filesystems and **IaC**. `trivy config <dir>` checks Terraform for **misconfigurations** against hundreds of built-in checks (IDs like `AVD-AWS-0086`). **tfsec**, the earlier Terraform scanner from the same company, was merged into Trivy; ⚠️ new projects should use Trivy. You already know Trivy from image scanning in your [GitHub Actions capstone](../../GitHub-Actions-Basics-To-Production/notes/44-capstone-02-trivy-filesystem-scan.md).
+**Trivy** (by Aqua Security, open source) scans container images, filesystems and **IaC**. `trivy config <dir>` checks Terraform for **misconfigurations** against hundreds of built-in checks (IDs like `AVD-AWS-0086`; newer Trivy versions print the shorter form `AWS-0086`, so copy the ID exactly as your version prints it). **tfsec**, the earlier Terraform scanner from the same company, was merged into Trivy; ⚠️ new projects should use Trivy. You already know Trivy from image scanning in your [GitHub Actions capstone](../../GitHub-Actions-Basics-To-Production/notes/44-capstone-02-trivy-filesystem-scan.md).
 
 ### Checkov
 

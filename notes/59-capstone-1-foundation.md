@@ -341,6 +341,11 @@ data "aws_ami" "al2023" {
 
 resource "aws_launch_template" "web" {
   name_prefix   = "${var.name}-${var.environment}-web-"     # prefix: allows create_before_destroy
+  # ⚠️ Floating AMI: every AL2023 release changes this ID, so the NEXT unrelated
+  # apply creates a new launch template version and (with instance_refresh)
+  # replaces the whole fleet without anyone asking for it. Fine for this lab;
+  # in prod pin it: coalesce(var.ami_id, data.aws_ami.al2023.id) (topic 61),
+  # and roll new AMIs deliberately through a PR.
   image_id      = data.aws_ami.al2023.id
   instance_type = var.instance_type
 

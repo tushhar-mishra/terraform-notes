@@ -123,7 +123,7 @@ resource "terraform_data" "warm_cache" {
 
 ### `action` blocks (Terraform 1.14+)
 
-Some operations are **actions**, not things: "invalidate the CloudFront cache", "invoke this Lambda", "run this SSM command". Terraform 1.14 added **`action`** blocks, which are **provider-defined** operations you can trigger from a resource's lifecycle events (`after_create`, `after_update`; 1.16 added `before_destroy`/`after_destroy`) or run explicitly (`terraform apply -invoke=action.TYPE.NAME`). Unlike `local-exec`, they're typed, validated, shown in plans and don't depend on tools installed on the runner. Provider coverage is growing; check your provider's docs for an "Actions" section (topic 67).
+Some operations are **actions**, not things: "invalidate the CloudFront cache", "invoke this Lambda", "run this SSM command". Terraform 1.14 added **`action`** blocks, which are **provider-defined** operations you can trigger from a resource's lifecycle events (`before_create`, `after_create`, `before_update`, `after_update` since 1.14; 1.16 added destroy events and `on_failure` modes) or run explicitly (`terraform apply -invoke=action.TYPE.NAME`). Unlike `local-exec`, they're typed, validated, shown in plans and don't depend on tools installed on the runner. Provider coverage is growing; check your provider's docs for an "Actions" section (topic 67).
 
 ```hcl
 action "aws_lambda_invoke" "notify" {
